@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Rock-Paper-Scissors</title>
+    <link rel="stylesheet" href="Stylesheet.css">
+    <style>
+      
+    </style>
+</head>
+
+<body>
+    <div class="floating-icons">
+        <div class="floating-icon" style="left: 10%; top: 20%; font-size: 2rem; animation-delay: 0s; animation-duration: 20s; color: var(--neon-pink);">✊</div>
+        <div class="floating-icon" style="left: 25%; top: 50%; font-size: 2.5rem; animation-delay: 2s; animation-duration: 18s; color: var(--neon-blue);">✋</div>
+        <div class="floating-icon" style="left: 75%; top: 30%; font-size: 3rem; animation-delay: 4s; animation-duration: 22s; color: var(--neon-yellow);">✌️</div>
+        <div class="floating-icon" style="left: 50%; top: 80%; font-size: 2rem; animation-delay: 6s; animation-duration: 17s; color: var(--neon-purple);">✊</div>
+        <div class="floating-icon" style="left: 85%; top: 60%; font-size: 2.8rem; animation-delay: 8s; animation-duration: 19s; color: var(--paper-color);">✋</div>
+    </div>
+
+    <div class="game">
+        <h1>Rock Paper Scissors</h1>
+        <div class="game-subtitle">Choose your weapon!</div>
+    </div>
+
+    <div class="buttons-container">
+        <button id="rock">
+            <i class="fa-solid fa-hand-back-fist"></i> Rock
+        </button>
+        <button id="paper">
+            <i class="fa-solid fa-hand"></i> Paper
+        </button>
+        <button id="scissors">
+            <i class="fa-solid fa-hand-scissors"></i> Scissors
+        </button>
+    </div>
+
+    <div class="result-container">
+        <div class="battle-display">
+            <div class="choice player-choice">
+                <div class="choice-icon">?</div>
+                <div class="choice-label">You</div>
+            </div>
+            <div class="vs">VS</div>
+            <div class="choice computer-choice">
+                <div class="choice-icon">?</div>
+                <div class="choice-label">Computer</div>
+            </div>
+        </div>
+        
+        <div class="result-message">Make your choice to start the game!</div>
+        
+        <div class="score-container">
+            <div class="score">Wins: <span id="wins">0</span></div>
+            <div class="score">Losses: <span id="losses">0</span></div>
+            <div class="score">Ties: <span id="ties">0</span></div>
+        </div>
+    </div>
+    
+    <script>
+        // Game variables
+        let wins = 0;
+        let losses = 0;
+        let ties = 0;
+        let winStreak = 0;
+        let lastResult = null;
+
+        // DOM elements
+        const rockBtn = document.getElementById('rock');
+        const paperBtn = document.getElementById('paper');
+        const scissorsBtn = document.getElementById('scissors');
+        const resultMessage = document.querySelector('.result-message');
+        const playerChoiceIcon = document.querySelector('.player-choice .choice-icon');
+        const computerChoiceIcon = document.querySelector('.computer-choice .choice-icon');
+        const winsDisplay = document.getElementById('wins');
+        const lossesDisplay = document.getElementById('losses');
+        const tiesDisplay = document.getElementById('ties');
+        const buttons = document.querySelectorAll('button');
+        const playerChoiceDisplay = document.querySelector('.player-choice');
+        const computerChoiceDisplay = document.querySelector('.computer-choice');
+
+        // Emoji mapping
+        const emojis = {
+            rock: '✊',
+            paper: '✋',
+            scissors: '✌️'
+        };
+
+        // Color mapping
+        const colors = {
+            rock: '#ff6b6b',
+            paper: '#4ecdc4',
+            scissors: '#ffd166'
+        };
+
+        // Helper function to get computer's move
+        function getComputerMove() {
+            const randomNumber = Math.random();
+            if (randomNumber < 1/3) {
+                return 'rock';
+            } else if (randomNumber < 2/3) {
+                return 'paper';
+            } else {
+                return 'scissors';
+            }
+        }
+
+        // Helper function to determine the winner
+        function determineWinner(playerMove, computerMove) {
+            if (playerMove === computerMove) {
+                return 'tie';
+            }
+            
+            if (
+                (playerMove === 'rock' && computerMove === 'scissors') ||
+                (playerMove === 'paper' && computerMove === 'rock') ||
+                (playerMove === 'scissors' && computerMove === 'paper')
+            ) {
+                return 'win';
+            }
+            
+            return 'lose';
+        }
+
+        // Create confetti effect
+        function createConfetti() {
+            const colors = ['#f15bb5', '#fee440', '#00bbf9', '#00f5d4', '#ff6b6b', '#9d4edd'];
+            
+            for (let i = 0; i < 120; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.width = Math.random() * 8 + 4 + 'px';
+                confetti.style.height = confetti.style.width;
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                document.body.appendChild(confetti);
+                
+                // Remove confetti after animation
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }
+        }
+
+        // Show win streak notification
+        function showWinStreak() {
+            // Remove existing streak notification if any
+            const existingStreak = document.querySelector('.win-streak');
+            if (existingStreak) existingStreak.remove();
+            
+            const streakElement = document.createElement('div');
+            streakElement.className = 'win-streak';
+            streakElement.innerHTML = `<i class="fas fa-fire"></i> Win Streak: ${winStreak} <i class="fas fa-fire"></i>`;
+            document.body.appendChild(streakElement);
+            
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                streakElement.style.opacity = '0';
+                streakElement.style.transform = 'translateY(-20px)';
+                setTimeout(() => streakElement.remove(), 500);
+            }, 3000);
+        }
+
+        // Animate choice reveal
+        function animateChoice(element) {
+            element.style.animation = 'choiceReveal 0.4s ease-out';
+            setTimeout(() => {
+                element.style.animation = '';
+            }, 400);
+        }
+
+        // Helper function to update the UI
+        function updateUI(playerMove, computerMove, result) {
+            // Add button click animation
+            buttons.forEach(btn => btn.classList.remove('pulse'));
+            document.getElementById(playerMove).classList.add('pulse');
+            
+            // Update choices display with animation
+            playerChoiceIcon.textContent = emojis[playerMove];
+            computerChoiceIcon.textContent = emojis[computerMove];
+            playerChoiceIcon.style.color = colors[playerMove];
+            computerChoiceIcon.style.color = colors[computerMove];
+            
+            animateChoice(playerChoiceIcon);
+            animateChoice(computerChoiceIcon);
+            
+            // Update result message
+            resultMessage.classList.remove('win', 'lose', 'tie', 'bounce', 'shake');
+            void resultMessage.offsetWidth;
+            
+            let resultText = '';
+            switch(result) {
+                case 'win':
+                    resultText = `You Win! ${emojis[playerMove]} beats ${emojis[computerMove]}`;
+                    wins++;
+                    
+                    // Handle win streak
+                    if (lastResult === 'win') {
+                        winStreak++;
+                    } else {
+                        winStreak = 1;
+                    }
+                    
+                    if (winStreak >= 2) {
+                        showWinStreak();
+                        if (winStreak >= 3) {
+                            createConfetti();
+                        }
+                    } else {
+                        createConfetti();
+                    }
+                    
+                    resultMessage.classList.add('win', 'bounce');
+                    break;
+                case 'lose':
+                    resultText = `You Lose! ${emojis[computerMove]} beats ${emojis[playerMove]}`;
+                    losses++;
+                    winStreak = 0;
+                    resultMessage.classList.add('lose', 'shake');
+                    break;
+                case 'tie':
+                    resultText = `It's a Tie! Both chose ${emojis[playerMove]}`;
+                    ties++;
+                    winStreak = 0;
+                    resultMessage.classList.add('tie', 'shake');
+                    break;
+            }
+            
+            lastResult = result;
+            resultMessage.textContent = resultText;
+            
+            // Update scores with animation
+            [winsDisplay, lossesDisplay, tiesDisplay].forEach(el => {
+                el.classList.remove('pulse');
+                void el.offsetWidth;
+            });
+            
+            if (result === 'win') winsDisplay.classList.add('pulse');
+            if (result === 'lose') lossesDisplay.classList.add('pulse');
+            if (result === 'tie') tiesDisplay.classList.add('pulse');
+            
+            winsDisplay.textContent = wins;
+            lossesDisplay.textContent = losses;
+            tiesDisplay.textContent = ties;
+        }
+
+        // Event listeners for buttons
+        function setupButtonListener(button, move) {
+            button.addEventListener('click', () => {
+                const computerMove = getComputerMove();
+                const result = determineWinner(move, computerMove);
+                updateUI(move, computerMove, result);
+            });
+        }
+
+        setupButtonListener(rockBtn, 'rock');
+        setupButtonListener(paperBtn, 'paper');
+        setupButtonListener(scissorsBtn, 'scissors');
+    </script>
+</body>
+</html>
